@@ -29,13 +29,13 @@ The project is structured into four core components:
 
 *(Below is a preview of the interactive Power BI application driving the financial and operational insights.)*
 
-![Inventory Optimization Engine](images/Inventory Optimization.png)
+![Inventory Optimization Engine](images/Inventory%20Optimization.png)
 *(Above: The Operational Engine tracking baseline metrics and unit demand.)*
 
-![Financial Impact](images/Financial Impact.png)
+![Financial Impact](images/Financial%20Impact.png)
 *(Above: Scenario testing and financial risk breakdown by product category.)*
 
-![Model Validation](images/Model Validation.png)
+![Model Validation](images/Model%20Validation.png)
 *(Above: Visual validation of the statistical forecasting models.)*
 
 ## 📂 Project Structure
