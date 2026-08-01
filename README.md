@@ -81,21 +81,25 @@ The project is structured into four core components:
 
 ## ⚙️ How to Run the Project
 
-1.Clone this repository:
+**1.Clone this repository:**
 ```
 git clone [https://github.com/nishhh2004/Predictive_Retail_Platform.git](https://github.com/nishhh2004/Predictive_Retail_Platform.git)
 ```
 
-2.Install the required Python libraries:
+**2.Install the required Python libraries:**
 ```
 pip install -r requirements.txt
 ```
 
-3.Data Setup: Ensure the raw CSV files are located in the data/raw/ directory.
+3. **Data Setup:** 
+   * Most of the foundational data (e.g., `oil.csv`, `stores.csv`, `holidays_events.csv`) is already included in the `data/raw/` directory of this repository.
+   * Due to GitHub's file size limits, the two largest datasets must be downloaded externally from this [Google Drive Link](https://drive.google.com/drive/folders/1otuq3_I0g40NaEekUTqaYHOstFUemTX6?usp=sharing).
+   * Once downloaded, place `master_sales_data.csv` directly into the `data/` directory.
+   * Place the `train.csv` file into the `data/raw/` directory.
 
-4.Notebooks: Open the Jupyter Notebooks in sequential order (01 -> 02 -> 03 -> 04) to view the data pipeline, exploratory analysis, and statistical modeling.
+**4.Notebooks:** Open the Jupyter Notebooks in sequential order (01 -> 02 -> 03 -> 04) to view the data pipeline, exploratory analysis, and statistical modeling.
 
-5.Dashboard: Open the Inventory_Optimization_App.pbix file in Power BI Desktop to interact with the final visualizations.
+**5.Dashboard:** Open the Inventory_Optimization_App.pbix file in Power BI Desktop to interact with the final visualizations.
 
 ## 👨‍💻 Author
 
