@@ -4,6 +4,8 @@
 ![SQL](https://img.shields.io/badge/SQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![SARIMA](https://img.shields.io/badge/Statsmodels_(SARIMA)-FF6F00?style=for-the-badge&logo=scipy&logoColor=white)
 ![Power BI](https://img.shields.io/badge/Power_BI-F2C811?style=for-the-badge&logo=powerbi&logoColor=black)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
 
 ## 📌 Project Overview
 
@@ -24,6 +26,7 @@ The project is structured into four core components:
 * **Statistical Modeling:** `statsmodels` (SARIMA), `scikit-learn` (preprocessing)
 * **Data Visualization:** Matplotlib, Seaborn
 * **Business Intelligence:** Power BI (Custom UI/UX formatting)
+* **Interactive Dashboard:** Streamlit, Plotly, streamlit-option-menu
 
 ## 📊 Executive Interface
 
@@ -41,6 +44,7 @@ The project is structured into four core components:
 ## 📂 Project Structure
 
 ```text
+├── app.py                        # Streamlit analytics dashboard
 ├── dashboards/
 │   └── Inventory_Optimization_App.pbix
 ├── data/
@@ -79,11 +83,26 @@ The project is structured into four core components:
 └── README.md
 ```
 
+## 🖥️ Interactive Streamlit Dashboard
+
+The platform includes a premium, multi-page **Streamlit** web application with three modules:
+
+| Page | Description |
+|---|---|
+| **Executive Dashboard** | KPI cards, historical vs. predicted sales chart, inventory risk breakdown |
+| **Demand Forecasting** | Interactive SARIMA forecast interface with configurable store, category, and horizon |
+| **Inventory Optimization** | Reorder recommendation engine with action-coded SKU table |
+
+Launch the dashboard:
+```bash
+streamlit run app.py
+```
+
 ## ⚙️ How to Run the Project
 
 **1.Clone this repository:**
 ```
-git clone [https://github.com/nishhh2004/Predictive_Retail_Platform.git](https://github.com/nishhh2004/Predictive_Retail_Platform.git)
+git clone https://github.com/nishhh2004/Predictive_Retail_Analytics_Platform.git
 ```
 
 **2.Install the required Python libraries:**
@@ -99,7 +118,9 @@ pip install -r requirements.txt
 
 **4.Notebooks:** Open the Jupyter Notebooks in sequential order (01 -> 02 -> 03 -> 04) to view the data pipeline, exploratory analysis, and statistical modeling.
 
-**5.Dashboard:** Open the Inventory_Optimization_App.pbix file in Power BI Desktop to interact with the final visualizations.
+**5.Power BI Dashboard:** Open the Inventory_Optimization_App.pbix file in Power BI Desktop to interact with the final visualizations.
+
+**6.Streamlit Dashboard:** Run `streamlit run app.py` to launch the interactive web application.
 
 ## 👨‍💻 Author
 
