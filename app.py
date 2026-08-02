@@ -419,16 +419,18 @@ def generate_mock_forecast(
     include_holidays: bool,
     impute_oil: bool,
     seed: int = 42,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Generate mock SARIMA-style forecast data with seasonal patterns.
 
-    This function simulates a realistic retail demand forecast with:
-      - A base trend component
-      - Weekly seasonality (7-day cycle)
-      - Monthly seasonality (30-day cycle)
-      - Random noise
-      - Expanding confidence intervals
+    Returns three DataFrames:
+      - df_hist: 90 days of historical demand
+      - df_forecast: forecasted demand with confidence intervals
+      - df_actual: simulated "actual" demand (ground truth with different noise)
+
+    The forecast and actual share the same underlying signal but have
+    different noise seeds, simulating how a real model's predictions
+    would differ from actual observed values.
 
     PLACEHOLDER: To swap with your real SARIMA model:
         import pickle
@@ -437,6 +439,8 @@ def generate_mock_forecast(
         forecast_obj = model.get_forecast(steps=horizon_days, exog=exog)
         result = forecast_obj.summary_frame(alpha=0.05)
         # result columns: mean, mean_se, mean_ci_lower, mean_ci_upper
+        # For actual demand, query from your sales database:
+        # df_actual = pd.read_sql("SELECT date, sales FROM daily_sales WHERE ...", engine)
     """
     rng = np.random.default_rng(seed + store_id + hash(category) % 1000)
 
@@ -466,12 +470,21 @@ def generate_mock_forecast(
     if impute_oil:
         oil_effect = -200 * np.sin(2 * np.pi * np.arange(total_days) / 60)
 
-    noise = rng.normal(0, 350, total_days)
-    values = base + trend + weekly + monthly + holiday_bump + oil_effect + noise
-    values = np.maximum(values, 100)
+    # Shared signal (trend + seasonality + external factors)
+    signal = base + trend + weekly + monthly + holiday_bump + oil_effect
 
-    historical = values[:hist_days]
-    forecast = values[hist_days:]
+    # Forecast uses one noise seed (model's prediction)
+    forecast_noise = rng.normal(0, 350, total_days)
+    forecast_values = np.maximum(signal + forecast_noise, 100)
+
+    # Actual demand uses a different noise seed (real-world variation)
+    rng_actual = np.random.default_rng(seed + store_id + hash(category) % 1000 + 9999)
+    actual_noise = rng_actual.normal(0, 400, total_days)
+    actual_values = np.maximum(signal + actual_noise, 100)
+
+    historical = actual_values[:hist_days]
+    forecast = forecast_values[hist_days:]
+    actual_future = actual_values[hist_days:]
 
     ci_expansion = np.linspace(0.5, 2.5, horizon_days)
     std_base = float(np.std(historical)) * 0.6
@@ -490,8 +503,13 @@ def generate_mock_forecast(
         "upper_bound": upper_bound,
         "type": "Forecast",
     })
+    df_actual = pd.DataFrame({
+        "date": dates[hist_days:],
+        "value": actual_future,
+        "type": "Actual",
+    })
 
-    return df_hist, df_forecast
+    return df_hist, df_forecast, df_actual
 
 
 def generate_reorder_table(inventory_df: pd.DataFrame) -> pd.DataFrame:
@@ -1002,7 +1020,7 @@ elif selected_page == "Demand Forecasting":
     spacer(16)
 
     # --- Generate Forecast ---
-    df_hist, df_fc = generate_mock_forecast(
+    df_hist, df_fc, df_actual = generate_mock_forecast(
         store_id=store_id,
         category=category,
         start_date=datetime.combine(forecast_start, datetime.min.time()),
@@ -1013,32 +1031,45 @@ elif selected_page == "Demand Forecasting":
 
     # --- KPI Summary for this forecast ---
     avg_forecast = float(df_fc["value"].mean())
-    peak_demand = float(df_fc["value"].max())
+    avg_actual = float(df_actual["value"].mean())
+    peak_demand = float(df_actual["value"].max())
     avg_historical = float(df_hist["value"].mean())
     change_pct = ((avg_forecast - avg_historical) / avg_historical) * 100
+    # Compute forecast MAPE vs simulated actuals
+    fc_mape = float(
+        np.mean(np.abs(df_fc["value"].values - df_actual["value"].values)
+                / np.maximum(df_actual["value"].values, 1)) * 100
+    )
 
-    kpi_fc_cols = st.columns(4)
+    kpi_fc_cols = st.columns(5)
     fc_kpis = [
+        (
+            "Forecast MAPE",
+            f"{fc_mape:.1f}%",
+            f"across {horizon} days",
+            "teal" if fc_mape < 10 else "amber",
+            "🎯",
+        ),
         (
             "Avg Forecasted Demand",
             f"{avg_forecast:,.0f}",
             "units/day",
-            "teal",
+            "blue",
             "📊",
         ),
         (
-            "Peak Demand",
+            "Avg Actual Demand",
+            f"{avg_actual:,.0f}",
+            "units/day",
+            "purple",
+            "📈",
+        ),
+        (
+            "Peak Actual Demand",
             f"{peak_demand:,.0f}",
             f"within {horizon}d window",
             "amber",
             "🔺",
-        ),
-        (
-            "Historical Avg",
-            f"{avg_historical:,.0f}",
-            "baseline (90d)",
-            "blue",
-            "📉",
         ),
         (
             "Demand Shift",
@@ -1048,9 +1079,9 @@ elif selected_page == "Demand Forecasting":
             "🔄",
         ),
     ]
-    for col, (label, value, delta, accent, icon) in zip(kpi_fc_cols, fc_kpis):
+    for col, (lbl, val, dlt, acc, ico) in zip(kpi_fc_cols, fc_kpis):
         col.markdown(
-            kpi_card(label, value, delta, accent, icon),
+            kpi_card(lbl, val, dlt, acc, ico),
             unsafe_allow_html=True,
         )
 
@@ -1104,6 +1135,19 @@ elif selected_page == "Demand Forecasting":
         ),
     ))
 
+    # Actual demand line (simulated ground truth)
+    fig_fc.add_trace(go.Scatter(
+        x=df_actual["date"],
+        y=df_actual["value"],
+        mode="lines",
+        name="Actual Demand",
+        line=dict(color=COLORS["accent_rose"], width=2, dash="dot"),
+        hovertemplate=(
+            "Date: %{x|%b %d, %Y}<br>"
+            "Actual: %{y:,.0f}<extra></extra>"
+        ),
+    ))
+
     # Vertical line separating historical and forecast
     fig_fc.add_vline(
         x=df_fc["date"].iloc[0].timestamp() * 1000,
@@ -1130,11 +1174,18 @@ elif selected_page == "Demand Forecasting":
     # --- Forecast Data Table (collapsible) ---
     with st.expander("📋 View Raw Forecast Data", expanded=False):
         display_fc = df_fc[["date", "value", "lower_bound", "upper_bound"]].copy()
+        display_fc["actual_demand"] = df_actual["value"].values
+        display_fc["error_pct"] = (
+            np.abs(display_fc["value"] - display_fc["actual_demand"])
+            / np.maximum(display_fc["actual_demand"], 1) * 100
+        ).round(1)
         display_fc.columns = [
             "Date",
             "Forecasted Demand",
             "Lower Bound (95%)",
             "Upper Bound (95%)",
+            "Actual Demand",
+            "Error %",
         ]
         display_fc["Date"] = display_fc["Date"].dt.strftime("%Y-%m-%d")
         st.dataframe(
@@ -1149,6 +1200,12 @@ elif selected_page == "Demand Forecasting":
                 ),
                 "Upper Bound (95%)": st.column_config.NumberColumn(
                     format="%,.0f"
+                ),
+                "Actual Demand": st.column_config.NumberColumn(
+                    format="%,.0f"
+                ),
+                "Error %": st.column_config.NumberColumn(
+                    format="%.1f%%"
                 ),
             },
         )
