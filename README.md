@@ -1,4 +1,5 @@
 # 🎯 Predictive Retail Analytics Platform
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Access_App-00d4ff?style=for-the-badge&logo=streamlit&logoColor=white)](https://predictive-retail-analytics-platform.onrender.com/)
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![SQL](https://img.shields.io/badge/SQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
